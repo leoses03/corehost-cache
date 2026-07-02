@@ -38,8 +38,7 @@ class CHC_Admin_Bar
             wp_die(esc_html__('No autorizado', 'corehost-cache'), '', ['response' => 403]);
         }
         check_admin_referer(self::NONCE);
-        chc_store()->purge_all();
-        update_option('chc_last_purge', time(), false);
+        chc_purge_all();
         wp_safe_redirect(add_query_arg('chc_purged', '1', wp_get_referer() ?: admin_url()));
         exit;
     }

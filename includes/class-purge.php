@@ -53,8 +53,7 @@ class CHC_Purge
 
     public function all(): void
     {
-        chc_store()->purge_all();
-        (new CHC_Cloudflare())->purge_all();
+        chc_purge_all();
     }
 
     public function ttl_sweep(): void

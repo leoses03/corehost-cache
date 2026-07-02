@@ -7,8 +7,7 @@ class CHC_CLI
     /** Purga todo el cache. */
     public function purge($args, $assoc): void
     {
-        chc_store()->purge_all();
-        update_option('chc_last_purge', time(), false);
+        chc_purge_all();
         WP_CLI::success('Cache purgada.');
     }
 

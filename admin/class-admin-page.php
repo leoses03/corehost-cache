@@ -60,8 +60,7 @@ class CHC_Admin_Page
     {
         check_ajax_referer('chc_purge');
         if (!current_user_can('manage_options')) { wp_send_json_error('forbidden', 403); }
-        chc_store()->purge_all();
-        update_option('chc_last_purge', time(), false);
+        chc_purge_all();
         wp_send_json_success(['ok' => true]);
     }
 
