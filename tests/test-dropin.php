@@ -20,3 +20,21 @@ t_assert(CHC_Dropin::set_wp_cache_in($wpc, false), 'set_wp_cache_in(false) devue
 t_assert(!str_contains(file_get_contents($wpc), 'WP_CACHE'), 'quita define WP_CACHE');
 @unlink($wpc);
 @unlink($wpc.'.chc-bak');
+
+// Regresión: wp-config con línea en blanco antes de <?php (o BOM) NO debe duplicar la etiqueta.
+$wpc2 = sys_get_temp_dir().'/chc-wpconfig-bom-'.getmypid().'.php';
+file_put_contents($wpc2, "\n<?php\n// x\n");
+t_assert(CHC_Dropin::set_wp_cache_in($wpc2, true), 'set_wp_cache_in(true) con espacio inicial devuelve true');
+$out2 = file_get_contents($wpc2);
+t_assert(str_contains($out2, "define('WP_CACHE', true)"), 'agrega define WP_CACHE (BOM/espacio inicial)');
+t_eq(substr_count($out2, '<?php'), 1, 'no duplica la etiqueta <?php');
+@unlink($wpc2);
+@unlink($wpc2.'.chc-bak');
+
+// Fail-safe: archivo sin <?php no se toca (no es un wp-config válido).
+$wpc3 = sys_get_temp_dir().'/chc-nowpc-'.getmypid().'.txt';
+file_put_contents($wpc3, "no php here\n");
+t_assert(CHC_Dropin::set_wp_cache_in($wpc3, true) === false, 'sin <?php => false (no escribe)');
+t_assert(!str_contains(file_get_contents($wpc3), 'WP_CACHE'), 'archivo sin <?php queda intacto');
+@unlink($wpc3);
+@unlink($wpc3.'.chc-bak');

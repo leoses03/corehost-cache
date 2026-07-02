@@ -70,10 +70,14 @@ class CHC_Dropin
         $new = $stripped;
         if ($on) {
             $insert = "define('WP_CACHE', true); // CoreHost Cache\n";
-            if (preg_match('/^<\?php[^\n]*\n/', $stripped, $m)) {
-                $new = preg_replace('/^<\?php[^\n]*\n/', $m[0] . $insert, $stripped, 1);
+            // Inserta tras el PRIMER `<?php` esté donde esté (tolera BOM/espacios/línea en blanco
+            // antes de la etiqueta); nunca duplica la etiqueta de apertura. Sin `<?php` => no es
+            // un wp-config válido: fail-safe, no escribir.
+            if (preg_match('/<\?php\s*?\n?/', $stripped, $m, PREG_OFFSET_CAPTURE)) {
+                $pos = $m[0][1] + strlen($m[0][0]);
+                $new = substr($stripped, 0, $pos) . $insert . substr($stripped, $pos);
             } else {
-                $new = "<?php\n" . $insert . $stripped;
+                return false; // no <?php: no es un wp-config válido, no tocar
             }
         }
 
