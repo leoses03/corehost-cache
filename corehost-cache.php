@@ -21,6 +21,7 @@ require_once CHC_DIR . 'includes/class-page-generator.php';
 require_once CHC_DIR . 'includes/class-purge.php';
 require_once CHC_DIR . 'admin/class-admin-page.php';
 require_once CHC_DIR . 'admin/class-admin-bar.php';
+require_once CHC_DIR . 'admin/class-post-meta.php';
 
 /** Ajustes con defaults; excluded_roles = TODOS los roles si no se guardó nada. */
 function chc_settings(): array
@@ -97,7 +98,10 @@ add_action('add_option_chc_settings', 'chc_refresh_htaccess');
 (new CHC_Purge())->register();
 (new CHC_Role_Gate())->register();
 (new CHC_Admin_Bar())->register(); // barra de admin: sale también en el front
-if (is_admin()) { (new CHC_Admin_Page())->register(); }
+if (is_admin()) {
+    (new CHC_Admin_Page())->register();
+    (new CHC_Post_Meta())->register();
+}
 
 if (defined('WP_CLI') && WP_CLI) {
     require_once CHC_DIR . 'includes/class-cli.php';
