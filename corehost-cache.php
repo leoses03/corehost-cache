@@ -29,7 +29,7 @@ function chc_settings(): array
 {
     // Se sirve index.html PLANO y el servidor (LiteSpeed) lo comprime al vuelo,
     // así que no hay toggles de compresión pre-generada (ver spec §4).
-    $d = ['enabled' => 1, 'ttl_hours' => 10, 'excluded_urls' => '', 'cf_enabled' => 0, 'cf_zone' => ''];
+    $d = ['enabled' => 1, 'ttl_hours' => 10, 'excluded_urls' => '', 'cf_enabled' => 0, 'cf_zone' => '', 'auto_warm' => 0];
     $s = array_merge($d, (array) get_option('chc_settings', []));
     if (!isset($s['excluded_roles'])) {
         $s['excluded_roles'] = function_exists('wp_roles') ? array_keys(wp_roles()->get_names()) : ['administrator'];
@@ -63,6 +63,35 @@ function chc_cache_url_path(): string
 
 function chc_root_htaccess(): string { return ABSPATH . '.htaccess'; }
 
+/** Purga TOTAL centralizada: cache local + Cloudflare + marca + evento. */
+function chc_purge_all(): void
+{
+    chc_store()->purge_all();
+    (new CHC_Cloudflare())->purge_all();
+    update_option('chc_last_purge', time(), false);
+    do_action('chc_purge_all_done');
+}
+
+/** Agenda una auto-precarga (una sola vez, con debounce) si está activada. */
+function chc_maybe_schedule_warm(): void
+{
+    if (empty(chc_settings()['auto_warm'])) { return; }
+    if (!wp_next_scheduled('chc_auto_warm')) {
+        wp_schedule_single_event(time() + 30, 'chc_auto_warm');
+    }
+}
+add_action('chc_purge_all_done', 'chc_maybe_schedule_warm');
+
+/** Handler del cron: recorre las URLs y las regenera en cache. */
+function chc_run_auto_warm(): void
+{
+    if (empty(chc_settings()['auto_warm'])) { return; }
+    foreach (CHC_Admin_Page::warm_urls() as $url) {
+        wp_remote_get($url, ['timeout' => 15, 'sslverify' => false, 'user-agent' => 'CoreHostCache-Warmer']);
+    }
+}
+add_action('chc_auto_warm', 'chc_run_auto_warm');
+
 function chc_refresh_htaccess(): void
 {
     $ok = CHC_Htaccess::install(chc_root_htaccess(), CHC_Htaccess::rules(chc_cache_url_path(), chc_tracking_params()));
@@ -94,6 +123,7 @@ register_activation_hook(__FILE__, function () {
 register_deactivation_hook(__FILE__, function () {
     CHC_Htaccess::remove(chc_root_htaccess());
     wp_clear_scheduled_hook('chc_ttl_sweep');
+    wp_clear_scheduled_hook('chc_auto_warm');
     chc_store()->purge_all();
 });
 
