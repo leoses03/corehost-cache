@@ -48,9 +48,14 @@ class CHC_Purge
         if (!$permalink) { return; }
         $p = wp_parse_url($permalink);
         chc_store()->delete_all_hosts($p['path'] ?? '/');
+        (new CHC_Cloudflare())->purge_urls([$permalink]);
     }
 
-    public function all(): void { chc_store()->purge_all(); }
+    public function all(): void
+    {
+        chc_store()->purge_all();
+        (new CHC_Cloudflare())->purge_all();
+    }
 
     public function ttl_sweep(): void
     {
