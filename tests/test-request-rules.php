@@ -24,3 +24,14 @@ t_assert(CHC_Request_Rules::should_cache(['no_cache_meta'=>true] + $ok) === fals
 t_assert(CHC_Request_Rules::matches_any('/carrito/', ['/carrito', '/checkout']) === true, 'match substring');
 t_assert(CHC_Request_Rules::matches_any('/blog/post/', ['/carrito']) === false, 'no match');
 t_assert(CHC_Request_Rules::matches_any('/x/', []) === false, 'lista vacía');
+
+// query_only_tracking (params de campaña utm_*/gclid/fbclid… no cambian el HTML de servidor)
+$tp = ['gclid','fbclid'];
+t_assert(CHC_Request_Rules::query_only_tracking('', $tp) === true, 'query vacía');
+t_assert(CHC_Request_Rules::query_only_tracking('utm_source=fb&utm_medium=cpc', $tp) === true, 'solo utm');
+t_assert(CHC_Request_Rules::query_only_tracking('fbclid=abc', $tp) === true, 'fbclid');
+t_assert(CHC_Request_Rules::query_only_tracking('utm_source=x&fbclid=y', $tp) === true, 'utm+fbclid');
+t_assert(CHC_Request_Rules::query_only_tracking('p=1', $tp) === false, 'param real => no');
+t_assert(CHC_Request_Rules::query_only_tracking('utm_source=x&p=1', $tp) === false, 'mezcla con real => no');
+t_assert(CHC_Request_Rules::should_cache(['query'=>'utm_source=x','query_only_tracking'=>true] + $ok) === true, 'solo-tracking => cacheable');
+t_assert(CHC_Request_Rules::should_cache(['query'=>'p=1'] + $ok) === false, 'query real sigue => no');

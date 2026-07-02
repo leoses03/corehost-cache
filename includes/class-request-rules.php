@@ -9,7 +9,7 @@ class CHC_Request_Rules
         if (!empty($c['is_admin']))  { return false; }
         if (!empty($c['logged_in'])) { return false; }
         if (($c['method'] ?? 'GET') !== 'GET') { return false; }
-        if (($c['query'] ?? '') !== '') { return false; }
+        if (($c['query'] ?? '') !== '' && empty($c['query_only_tracking'])) { return false; }
         if ((int) ($c['status'] ?? 200) !== 200) { return false; }
         if (stripos((string) ($c['content_type'] ?? 'text/html'), 'text/html') === false) { return false; }
         if (!empty($c['is_feed']))    { return false; }
@@ -19,6 +19,20 @@ class CHC_Request_Rules
         if (!empty($c['password_required'])) { return false; }
         if (!empty($c['bypass_cookie']))     { return false; }
         if (!empty($c['no_cache_meta'])) { return false; }
+        return true;
+    }
+
+    /** true si la query está vacía o SOLO tiene params de tracking (utm_* o de la lista). */
+    public static function query_only_tracking(string $qs, array $params): bool
+    {
+        if ($qs === '') { return true; }
+        parse_str($qs, $parsed);
+        if (!$parsed) { return true; }
+        foreach (array_keys($parsed) as $key) {
+            $key = (string) $key;
+            if (strpos($key, 'utm_') === 0) { continue; }
+            if (!in_array($key, $params, true)) { return false; }
+        }
         return true;
     }
 
@@ -46,6 +60,7 @@ class CHC_Request_Rules
         $s = chc_settings();
         $uri = $_SERVER['REQUEST_URI'] ?? '/';
         $status = http_response_code() ?: 200;
+        $query = $_SERVER['QUERY_STRING'] ?? '';
 
         $no_cache_meta = false;
         if (is_singular()) {
@@ -57,7 +72,8 @@ class CHC_Request_Rules
             'is_admin'          => false,
             'logged_in'         => false,
             'method'            => $_SERVER['REQUEST_METHOD'] ?? 'GET',
-            'query'             => $_SERVER['QUERY_STRING'] ?? '',
+            'query'             => $query,
+            'query_only_tracking' => self::query_only_tracking($query, chc_tracking_params()),
             'status'            => $status,
             'content_type'      => 'text/html',
             'is_feed'           => is_feed(),
