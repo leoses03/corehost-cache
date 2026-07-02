@@ -9,7 +9,7 @@ Generados por la skill `improve` el 2026-07-02 (commit base `54391ec`). Ejecutar
 | 001 | Toggle "No cachear esta página" + purga tras actualizaciones | P1 | S | — | DONE |
 | 002 | Purga de Cloudflare al invalidar | P1 | M | 001 | DONE (E2E real de CF pendiente, ver nota) |
 | 003 | Cachear con solo params de tracking (utm/gclid/fbclid) | P1 | M | — | DONE |
-| 004 | Auto-precarga tras purga total + centralizar la purga | P2 | M | — | TODO |
+| 004 | Auto-precarga tras purga total + centralizar la purga | P2 | M | — | DONE |
 
 Estados: TODO | IN PROGRESS | DONE | BLOCKED (motivo) | REJECTED (motivo)
 
