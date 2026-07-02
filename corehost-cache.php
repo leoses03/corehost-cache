@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: CoreHost Cache
- * Description: Page cache estático (HTML + gzip + brotli) servido por .htaccess sin PHP, con exclusión por rol e invalidación por evento+TTL. Seguro para WooCommerce.
- * Version: 1.0.0
+ * Description: Page cache estático servido por .htaccess sin PHP (LiteSpeed lo comprime al vuelo), con exclusión por rol e invalidación por evento+TTL. Seguro para WooCommerce.
+ * Version: 1.1.0
  * Author: CoreHost
  * Requires PHP: 8.1
  * License: GPL-2.0-or-later
@@ -10,7 +10,7 @@
 
 if (!defined('ABSPATH')) { exit; }
 
-define('CHC_VERSION', '1.0.0');
+define('CHC_VERSION', '1.1.0');
 define('CHC_DIR', plugin_dir_path(__FILE__));
 
 require_once CHC_DIR . 'includes/class-cache-store.php';
@@ -20,6 +20,7 @@ require_once CHC_DIR . 'includes/class-role-gate.php';
 require_once CHC_DIR . 'includes/class-page-generator.php';
 require_once CHC_DIR . 'includes/class-purge.php';
 require_once CHC_DIR . 'admin/class-admin-page.php';
+require_once CHC_DIR . 'admin/class-admin-bar.php';
 
 /** Ajustes con defaults; excluded_roles = TODOS los roles si no se guardó nada. */
 function chc_settings(): array
@@ -95,6 +96,7 @@ add_action('add_option_chc_settings', 'chc_refresh_htaccess');
 (new CHC_Page_Generator())->register();
 (new CHC_Purge())->register();
 (new CHC_Role_Gate())->register();
+(new CHC_Admin_Bar())->register(); // barra de admin: sale también en el front
 if (is_admin()) { (new CHC_Admin_Page())->register(); }
 
 if (defined('WP_CLI') && WP_CLI) {
