@@ -6,7 +6,7 @@ Generados por la skill `improve` el 2026-07-02 (commit base `54391ec`). Ejecutar
 
 | Plan | Título | Prioridad | Esfuerzo | Depende de | Estado |
 |------|--------|-----------|----------|------------|--------|
-| 001 | Toggle "No cachear esta página" + purga tras actualizaciones | P1 | S | — | TODO |
+| 001 | Toggle "No cachear esta página" + purga tras actualizaciones | P1 | S | — | DONE |
 | 002 | Purga de Cloudflare al invalidar | P1 | M | 001 | TODO |
 
 Estados: TODO | IN PROGRESS | DONE | BLOCKED (motivo) | REJECTED (motivo)
