@@ -47,6 +47,12 @@ class CHC_Request_Rules
         $uri = $_SERVER['REQUEST_URI'] ?? '/';
         $status = http_response_code() ?: 200;
 
+        $no_cache_meta = false;
+        if (is_singular()) {
+            $qid = get_queried_object_id();
+            if ($qid) { $no_cache_meta = (bool) get_post_meta($qid, '_chc_no_cache', true); }
+        }
+
         return self::should_cache([
             'is_admin'          => false,
             'logged_in'         => false,
@@ -60,6 +66,7 @@ class CHC_Request_Rules
             'woo_dynamic'       => $woo,
             'password_required' => function_exists('post_password_required') && post_password_required(),
             'bypass_cookie'     => (bool) preg_match('/(chc_nocache|comment_author_|wp-postpass_|woocommerce_items_in_cart|woocommerce_cart_hash|wp_woocommerce_session_)/', (string) ($_SERVER['HTTP_COOKIE'] ?? '')),
+            'no_cache_meta'     => $no_cache_meta,
         ]);
     }
 }
