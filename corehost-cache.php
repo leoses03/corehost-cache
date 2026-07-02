@@ -42,6 +42,13 @@ function chc_store(): CHC_Cache_Store
     return new CHC_Cache_Store(WP_CONTENT_DIR . '/cache/corehost-cache');
 }
 
+/** Parámetros de query que son solo de tracking (no cambian el HTML de servidor). */
+function chc_tracking_params(): array
+{
+    $list = ['gclid','gclsrc','dclid','wbraid','gbraid','fbclid','msclkid','mc_cid','mc_eid','ttclid','twclid','igshid','yclid'];
+    return array_values(array_unique(array_map('strval', (array) apply_filters('chc_tracking_params', $list))));
+}
+
 /**
  * Ruta URL (desde docroot) al dir de cache; maneja instalación en subdirectorio.
  * Se deriva de content_url() para ser correcta también bajo WP-CLI (donde
