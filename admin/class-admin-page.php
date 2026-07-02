@@ -42,6 +42,7 @@ class CHC_Admin_Page
             'cf_enabled'     => empty($input['cf_enabled']) ? 0 : 1,
             'cf_zone'        => sanitize_text_field((string) ($input['cf_zone'] ?? '')),
             'cf_token'       => $cf_token,
+            'auto_warm'      => empty($input['auto_warm']) ? 0 : 1,
         ];
     }
 
@@ -167,6 +168,10 @@ class CHC_Admin_Page
                         <?php if ($cf_err = (string) get_option('chc_cf_last_error', '')) : ?>
                             <p class="description" style="color:#b32d2e">Último error Cloudflare: <?php echo esc_html($cf_err); ?></p>
                         <?php endif; ?>
+                    </td></tr>
+                    <tr><th scope="row">Auto-precarga</th><td>
+                        <label><input type="checkbox" name="chc_settings[auto_warm]" value="1" <?php checked($s['auto_warm']); ?>> Precargar el cache automáticamente tras una purga total</label>
+                        <p class="description">Agenda una precarga en segundo plano (WP-Cron) unos segundos después de purgar todo.</p>
                     </td></tr>
                 </table>
                 <?php submit_button(); ?>
