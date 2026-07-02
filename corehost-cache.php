@@ -24,9 +24,9 @@ require_once CHC_DIR . 'admin/class-admin-page.php';
 /** Ajustes con defaults; excluded_roles = TODOS los roles si no se guardó nada. */
 function chc_settings(): array
 {
-    // gzip/brotli pre-generados OFF por defecto: se sirve index.html PLANO y el servidor
-    // (LiteSpeed) lo comprime al vuelo, así que las variantes no se sirven (ver spec §4).
-    $d = ['enabled' => 1, 'ttl_hours' => 10, 'cache_404' => 0, 'excluded_urls' => '', 'gzip' => 0, 'brotli' => 0];
+    // Se sirve index.html PLANO y el servidor (LiteSpeed) lo comprime al vuelo,
+    // así que no hay toggles de compresión pre-generada (ver spec §4).
+    $d = ['enabled' => 1, 'ttl_hours' => 10, 'excluded_urls' => ''];
     $s = array_merge($d, (array) get_option('chc_settings', []));
     if (!isset($s['excluded_roles'])) {
         $s['excluded_roles'] = function_exists('wp_roles') ? array_keys(wp_roles()->get_names()) : ['administrator'];
@@ -59,8 +59,22 @@ function chc_refresh_htaccess(): void
     update_option('chc_htaccess_writable', $ok ? 1 : 0, false);
 }
 
+/** Protege el dir de cache: sin listado de directorios ni ejecución de PHP suelto. */
+function chc_protect_cache_dir(): void
+{
+    $base = WP_CONTENT_DIR . '/cache/corehost-cache';
+    wp_mkdir_p($base);
+    if (!is_file($base . '/index.php')) {
+        @file_put_contents($base . '/index.php', "<?php // Silence is golden.");
+    }
+    if (!is_file($base . '/.htaccess')) {
+        @file_put_contents($base . '/.htaccess', "Options -Indexes\n");
+    }
+}
+
 register_activation_hook(__FILE__, function () {
     wp_mkdir_p(WP_CONTENT_DIR . '/cache/corehost-cache');
+    chc_protect_cache_dir();
     chc_refresh_htaccess();
     if (!wp_next_scheduled('chc_ttl_sweep')) {
         wp_schedule_event(time() + HOUR_IN_SECONDS, 'hourly', 'chc_ttl_sweep');

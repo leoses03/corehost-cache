@@ -13,9 +13,11 @@ t_assert(CHC_Request_Rules::should_cache(['is_feed'=>true] + $ok) === false, 'fe
 t_assert(CHC_Request_Rules::should_cache(['donotcache'=>true] + $ok) === false, 'DONOTCACHEPAGE => no');
 t_assert(CHC_Request_Rules::should_cache(['excluded_url'=>true] + $ok) === false, 'url excluida => no');
 t_assert(CHC_Request_Rules::should_cache(['woo_dynamic'=>true] + $ok) === false, 'woo cart/checkout => no');
-// 404 solo si cache_404
-t_assert(CHC_Request_Rules::should_cache(['status'=>404] + $ok) === false, '404 sin flag => no');
-t_assert(CHC_Request_Rules::should_cache(['status'=>404,'cache_404'=>1] + $ok) === true, '404 con flag => sí');
+// cualquier no-200 => no (404 incluido, sin excepciones)
+t_assert(CHC_Request_Rules::should_cache(['status'=>404] + $ok) === false, '404 => no');
+// contenido protegido / con cookie de bypass => nunca cachear
+t_assert(CHC_Request_Rules::should_cache(['password_required'=>true] + $ok) === false, 'password-protected => no');
+t_assert(CHC_Request_Rules::should_cache(['bypass_cookie'=>true] + $ok) === false, 'cookie de bypass => no');
 
 // matches_any (para url_excluded)
 t_assert(CHC_Request_Rules::matches_any('/carrito/', ['/carrito', '/checkout']) === true, 'match substring');

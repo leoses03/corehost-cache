@@ -31,7 +31,7 @@ class CHC_CLI
         $n = 0;
         foreach ($urls as $u) {
             if (str_contains($u, 'sitemap')) { continue; }
-            wp_remote_get($u, ['timeout' => 20, 'headers' => ['Accept-Encoding' => 'br,gzip']]);
+            wp_remote_get($u, ['timeout' => 20]);
             $n++;
         }
         WP_CLI::success("Precalentadas $n URLs.");

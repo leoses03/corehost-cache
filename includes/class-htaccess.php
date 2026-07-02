@@ -54,7 +54,9 @@ class CHC_Htaccess
         $current  = is_file($file) ? (string) file_get_contents($file) : '';
         $stripped = self::strip($current);
         if (str_contains($stripped, '# BEGIN WordPress')) {
-            $new = preg_replace('/# BEGIN WordPress/', rtrim($block) . "\n\n# BEGIN WordPress", $stripped, 1);
+            // str_replace (no preg_replace): $block es texto dinámico y podría contener
+            // secuencias tipo $1/\1 que preg_replace interpretaría como referencias.
+            $new = str_replace('# BEGIN WordPress', rtrim($block) . "\n\n# BEGIN WordPress", $stripped);
         } else {
             $new = rtrim($block) . "\n\n" . ltrim($stripped);
         }

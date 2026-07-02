@@ -22,7 +22,7 @@ class CHC_Cache_Store
     }
 
     /** Escribe index.html + variantes .gz/.br. Devuelve formatos escritos. */
-    public function write(string $host, string $uri, string $html, bool $gzip = true, bool $brotli = true): array
+    public function write(string $host, string $uri, string $html, bool $gzip = false, bool $brotli = false): array
     {
         $dir = $this->dir_for($host, $uri);
         if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) { return []; }
@@ -42,6 +42,15 @@ class CHC_Cache_Store
         $dir = $this->dir_for($host, $uri);
         foreach (['index.html', 'index.html.gz', 'index.html.br'] as $f) {
             if (is_file("$dir/$f")) { @unlink("$dir/$f"); }
+        }
+    }
+
+    /** Borra la misma ruta en todos los hosts cacheados (multi-dominio / alias). */
+    public function delete_all_hosts(string $uri): void
+    {
+        if (!is_dir($this->base_dir)) { return; }
+        foreach (glob($this->base_dir . '/*', GLOB_ONLYDIR) ?: [] as $hostdir) {
+            $this->delete(basename($hostdir), $uri);
         }
     }
 

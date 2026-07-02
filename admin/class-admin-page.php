@@ -30,10 +30,7 @@ class CHC_Admin_Page
         return [
             'enabled'        => empty($input['enabled']) ? 0 : 1,
             'ttl_hours'      => max(0, (int) ($input['ttl_hours'] ?? 10)),
-            'cache_404'      => empty($input['cache_404']) ? 0 : 1,
             'excluded_urls'  => sanitize_textarea_field($input['excluded_urls'] ?? ''),
-            'gzip'           => empty($input['gzip']) ? 0 : 1,
-            'brotli'         => empty($input['brotli']) ? 0 : 1,
             'excluded_roles' => $excluded,
         ];
     }
@@ -78,13 +75,6 @@ class CHC_Admin_Page
                     </td></tr>
                     <tr><th scope="row">TTL (horas)</th><td>
                         <input type="number" min="0" name="chc_settings[ttl_hours]" value="<?php echo esc_attr($s['ttl_hours']); ?>"> <span class="description">0 = sin expiración por tiempo</span>
-                    </td></tr>
-                    <tr><th scope="row">Compresión</th><td>
-                        <label><input type="checkbox" name="chc_settings[gzip]" value="1" <?php checked($s['gzip']); ?>> gzip</label>&nbsp;
-                        <label><input type="checkbox" name="chc_settings[brotli]" value="1" <?php checked($s['brotli']); ?>> Brotli</label>
-                    </td></tr>
-                    <tr><th scope="row">404</th><td>
-                        <label><input type="checkbox" name="chc_settings[cache_404]" value="1" <?php checked($s['cache_404']); ?>> Cachear páginas 404</label>
                     </td></tr>
                     <tr><th scope="row">Roles excluidos del cache</th><td>
                         <p class="description">Los roles marcados <strong>siempre reciben la página fresca</strong> (bypass). Los desmarcados reciben la versión cacheada anónima.</p>

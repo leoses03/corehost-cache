@@ -28,6 +28,15 @@ $s->delete('ejemplo.com', '/about/');
 t_assert(!is_file("$base/ejemplo.com/about/index.html"), 'delete quita html');
 t_assert(!is_file("$base/ejemplo.com/about/index.html.gz"), 'delete quita gz');
 
+// delete_all_hosts borra la ruta en TODOS los hosts cacheados
+$s->write('a.com', '/foo/', $html);
+$s->write('b.com', '/foo/', $html);
+t_assert(is_file("$base/a.com/foo/index.html"), 'a.com/foo escrito');
+t_assert(is_file("$base/b.com/foo/index.html"), 'b.com/foo escrito');
+$s->delete_all_hosts('/foo/');
+t_assert(!is_file("$base/a.com/foo/index.html"), 'delete_all_hosts borra a.com');
+t_assert(!is_file("$base/b.com/foo/index.html"), 'delete_all_hosts borra b.com');
+
 // Sweep por TTL
 $s->write('ejemplo.com', '/viejo/', $html);
 $s->write('ejemplo.com', '/nuevo/', $html);
