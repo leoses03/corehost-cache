@@ -8,7 +8,7 @@ Generados por la skill `improve` el 2026-07-02 (commit base `54391ec`). Ejecutar
 |------|--------|-----------|----------|------------|--------|
 | 001 | Toggle "No cachear esta página" + purga tras actualizaciones | P1 | S | — | DONE |
 | 002 | Purga de Cloudflare al invalidar | P1 | M | 001 | DONE (E2E real de CF pendiente, ver nota) |
-| 003 | Cachear con solo params de tracking (utm/gclid/fbclid) | P1 | M | — | TODO |
+| 003 | Cachear con solo params de tracking (utm/gclid/fbclid) | P1 | M | — | DONE |
 
 Estados: TODO | IN PROGRESS | DONE | BLOCKED (motivo) | REJECTED (motivo)
 
@@ -18,9 +18,8 @@ Estados: TODO | IN PROGRESS | DONE | BLOCKED (motivo) | REJECTED (motivo)
 - 002 depende de 001 porque ambos extienden `includes/class-purge.php`; hacer 001 primero evita conflictos y 002 construye sobre el registro de hooks.
 
 ## Direction findings considerados (del análisis 2026-07-02)
-Elegidos para plan: #1 (Cloudflare → 002), #4 (invalidación + toggle → 001).
+Elegidos para plan: #1 (Cloudflare → 002), #4 (invalidación + toggle → 001), #2 (tracking params → 003).
 Pendientes/diferidos (no rechazados, se pueden planificar después):
-- **#2 Parámetros de tracking (`utm_*`/`fbclid`/`gclid`)** — normalizar para subir hit-rate en tráfico de campañas. Esfuerzo M.
 - **#3 Portabilidad nginx (drop-in `advanced-cache.php`)** — diseño ya discutido; sirve los mismos archivos sin `.htaccess`. Esfuerzo M. Diferido hasta aterrizar en un host nginx.
 - **#5 Auto-warm tras purga (WP-Cron)** — mantener el cache caliente. Esfuerzo M.
 
