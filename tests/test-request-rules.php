@@ -18,6 +18,7 @@ t_assert(CHC_Request_Rules::should_cache(['status'=>404] + $ok) === false, '404 
 // contenido protegido / con cookie de bypass => nunca cachear
 t_assert(CHC_Request_Rules::should_cache(['password_required'=>true] + $ok) === false, 'password-protected => no');
 t_assert(CHC_Request_Rules::should_cache(['bypass_cookie'=>true] + $ok) === false, 'cookie de bypass => no');
+t_assert(CHC_Request_Rules::should_cache(['no_cache_meta'=>true] + $ok) === false, 'meta no-cache => no');
 
 // matches_any (para url_excluded)
 t_assert(CHC_Request_Rules::matches_any('/carrito/', ['/carrito', '/checkout']) === true, 'match substring');

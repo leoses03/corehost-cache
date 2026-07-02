@@ -18,6 +18,7 @@ class CHC_Request_Rules
         if (!empty($c['woo_dynamic'])) { return false; }
         if (!empty($c['password_required'])) { return false; }
         if (!empty($c['bypass_cookie']))     { return false; }
+        if (!empty($c['no_cache_meta'])) { return false; }
         return true;
     }
 
