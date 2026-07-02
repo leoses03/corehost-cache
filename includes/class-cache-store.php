@@ -11,7 +11,9 @@ class CHC_Cache_Store
     /** Directorio de cache para host+URI (sin el archivo). */
     public function dir_for(string $host, string $uri): string
     {
-        $host = preg_replace('/[^a-z0-9.\-]/i', '_', $host) ?: 'host';
+        $host = preg_replace('/[^a-z0-9.\-]/i', '_', $host);
+        $host = str_replace('..', '_', $host);
+        $host = $host !== '' ? $host : 'host';
         $path = (string) (parse_url($uri, PHP_URL_PATH) ?: '/');
         $path = str_replace(["\0", '..'], '', $path);
         $path = '/' . trim($path, '/');           // normaliza; home => '/'

@@ -19,10 +19,11 @@ class CHC_Htaccess
         $srv = $c . '/%{HTTP_HOST}%{REQUEST_URI}';
 
         $skip_cookies = 'chc_nocache|comment_author_|wp-postpass_|woocommerce_items_in_cart|woocommerce_cart_hash|wp_woocommerce_session_';
-        $skip_uris    = '(^|/)(wp-admin|wp-login|wp-cron|wp-json|xmlrpc)';
+        $skip_uris    = '(^|/)(wp-admin|wp-login|wp-cron|wp-json|xmlrpc)([/.]|$)';
 
         $common =
-              "RewriteCond %{REQUEST_METHOD} GET\n"
+              "RewriteCond %{HTTP_HOST} ^[a-zA-Z0-9.\\-]+$\n"
+            . "RewriteCond %{REQUEST_METHOD} GET\n"
             . "RewriteCond %{QUERY_STRING} ^$\n"
             . "RewriteCond %{HTTP_COOKIE} !($skip_cookies) [NC]\n"
             . "RewriteCond %{REQUEST_URI} !$skip_uris [NC]\n";
@@ -78,7 +79,7 @@ class CHC_Htaccess
 
     private static function strip(string $content): string
     {
-        $p = '/' . preg_quote(self::BEGIN, '/') . '.*?' . preg_quote(self::END, '/') . "\n?/s";
+        $p = '/' . preg_quote(self::BEGIN, '/') . '.*?' . preg_quote(self::END, '/') . "\n*/s";
         return (string) preg_replace($p, '', $content);
     }
 }

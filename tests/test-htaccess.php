@@ -12,17 +12,22 @@ t_assert(str_contains($block, '/index.html.gz'), 'sirve gzip');
 t_assert(str_contains($block, '%{DOCUMENT_ROOT}/key/wp-content/cache/corehost-cache/%{HTTP_HOST}%{REQUEST_URI}/index.html'), 'ruta de existencia con prefijo subdir');
 t_assert(str_contains($block, 'X-CoreHost-Cache'), 'header de HIT');
 t_assert(str_contains($block, 'Content-Encoding'), 'header content-encoding');
+t_assert(str_contains($block, 'RewriteCond %{HTTP_HOST} ^[a-zA-Z0-9'), 'guard de host charset');
 
 // install: nuestro bloque va ANTES de # BEGIN WordPress; remove lo quita idempotente
 $tmp = sys_get_temp_dir() . '/chc-ht-' . getmypid() . '.htaccess';
 file_put_contents($tmp, "# BEGIN WordPress\nRewriteRule . /index.php [L]\n# END WordPress\n");
 CHC_Htaccess::install($tmp, $block);
-$c = file_get_contents($tmp);
+$after1 = file_get_contents($tmp);
+$c = $after1;
 t_assert(strpos($c, '# BEGIN CoreHost Cache') < strpos($c, '# BEGIN WordPress'), 'bloque arriba de WordPress');
 t_assert(str_contains($c, '# END WordPress'), 'conserva bloque WordPress');
 
 CHC_Htaccess::install($tmp, $block); // idempotente
 t_eq(substr_count(file_get_contents($tmp), '# BEGIN CoreHost Cache'), 1, 'install idempotente (un solo bloque)');
+t_eq(file_get_contents($tmp), $after1, 'install byte-idempotente (2da vez)');
+CHC_Htaccess::install($tmp, $block);
+t_eq(file_get_contents($tmp), $after1, 'install byte-idempotente (3ra vez)');
 
 CHC_Htaccess::remove($tmp);
 $c2 = file_get_contents($tmp);

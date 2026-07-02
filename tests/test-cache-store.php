@@ -8,6 +8,8 @@ t_eq($s->dir_for('ejemplo.com', '/about/'), "$base/ejemplo.com/about", 'trailing
 t_eq($s->dir_for('ejemplo.com', '/a/b/'), "$base/ejemplo.com/a/b", 'anidado');
 t_eq($s->dir_for('ejemplo.com', '/x/?q=1'), "$base/ejemplo.com/x", 'ignora query');
 t_assert(!str_contains($s->dir_for('e.com', '/../../etc'), '..'), 'sin traversal');
+t_assert(!str_contains($s->dir_for('..', '/x'), '..'), 'host .. neutralizado');
+t_eq($s->dir_for('ex@mple!.com', '/x/'), "$base/ex_mple_.com/x", 'host con chars raros => _');
 
 // Escribir + variantes + leer de vuelta
 $html = '<html>hola ' . str_repeat('x', 500) . '</html>';
@@ -34,6 +36,15 @@ $n = $s->sweep(3600); // borra >1h
 t_eq($n, 1, 'sweep borra 1 página vieja');
 t_assert(!is_file("$base/ejemplo.com/viejo/index.html"), 'vieja borrada');
 t_assert(is_file("$base/ejemplo.com/nuevo/index.html"), 'nueva permanece');
+
+// stats
+$s2 = new CHC_Cache_Store($base . '-stats');
+$s2->write('ejemplo.com', '/a/', $html);
+$s2->write('ejemplo.com', '/b/', $html);
+$st = $s2->stats();
+t_eq($st['pages'], 2, 'stats cuenta 2 páginas');
+t_assert($st['bytes'] > 0, 'stats bytes > 0');
+$s2->purge_all();
 
 // purge_all
 $s->purge_all();
