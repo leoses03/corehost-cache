@@ -28,11 +28,20 @@ class CHC_Admin_Page
         $input = (array) $input;
         $roles = function_exists('wp_roles') ? array_keys(wp_roles()->get_names()) : [];
         $excluded = array_values(array_intersect($roles, (array) ($input['excluded_roles'] ?? [])));
+
+        // El token es tipo password: si llega vacío (p.ej. el usuario no lo tocó), conserva el guardado.
+        $old       = (array) get_option('chc_settings', []);
+        $new_token = sanitize_text_field((string) ($input['cf_token'] ?? ''));
+        $cf_token  = $new_token !== '' ? $new_token : (string) ($old['cf_token'] ?? '');
+
         return [
             'enabled'        => empty($input['enabled']) ? 0 : 1,
             'ttl_hours'      => max(0, (int) ($input['ttl_hours'] ?? 10)),
             'excluded_urls'  => sanitize_textarea_field($input['excluded_urls'] ?? ''),
             'excluded_roles' => $excluded,
+            'cf_enabled'     => empty($input['cf_enabled']) ? 0 : 1,
+            'cf_zone'        => sanitize_text_field((string) ($input['cf_zone'] ?? '')),
+            'cf_token'       => $cf_token,
         ];
     }
 
@@ -138,6 +147,27 @@ class CHC_Admin_Page
                     <tr><th scope="row">URLs excluidas</th><td>
                         <textarea name="chc_settings[excluded_urls]" rows="4" style="width:100%" placeholder="/carrito&#10;/mi-cuenta"><?php echo esc_textarea($s['excluded_urls']); ?></textarea>
                         <p class="description">Una por línea; coincidencia por subcadena de la URL.</p>
+                    </td></tr>
+                    <tr><th scope="row">Cloudflare</th><td>
+                        <label><input type="checkbox" name="chc_settings[cf_enabled]" value="1" <?php checked($s['cf_enabled']); ?>> Purgar también el edge de Cloudflare al invalidar</label>
+                        <p>
+                            <label>Zone ID<br>
+                                <input type="text" name="chc_settings[cf_zone]" value="<?php echo esc_attr($s['cf_zone']); ?>" style="width:100%;max-width:400px" autocomplete="off">
+                            </label>
+                        </p>
+                        <?php if (defined('CHC_CF_TOKEN')) : ?>
+                            <p class="description">Token tomado de la constante <code>CHC_CF_TOKEN</code> en <code>wp-config.php</code> (recomendado). El campo de abajo se ignora mientras esa constante exista.</p>
+                        <?php else : ?>
+                            <p>
+                                <label>API Token (permiso Zone → Cache Purge)<br>
+                                    <input type="password" name="chc_settings[cf_token]" value="" placeholder="<?php echo !empty($s['cf_token']) ? esc_attr__('•••••••• (guardado, dejar vacío para conservarlo)', 'corehost-cache') : ''; ?>" style="width:100%;max-width:400px" autocomplete="off">
+                                </label>
+                            </p>
+                            <p class="description">Se recomienda definir la constante <code>CHC_CF_TOKEN</code> en <code>wp-config.php</code> en vez de guardar el token aquí (queda en la BD en texto plano).</p>
+                        <?php endif; ?>
+                        <?php if ($cf_err = (string) get_option('chc_cf_last_error', '')) : ?>
+                            <p class="description" style="color:#b32d2e">Último error Cloudflare: <?php echo esc_html($cf_err); ?></p>
+                        <?php endif; ?>
                     </td></tr>
                 </table>
                 <?php submit_button(); ?>

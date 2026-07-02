@@ -18,6 +18,7 @@ require_once CHC_DIR . 'includes/class-htaccess.php';
 require_once CHC_DIR . 'includes/class-request-rules.php';
 require_once CHC_DIR . 'includes/class-role-gate.php';
 require_once CHC_DIR . 'includes/class-page-generator.php';
+require_once CHC_DIR . 'includes/class-cloudflare.php';
 require_once CHC_DIR . 'includes/class-purge.php';
 require_once CHC_DIR . 'admin/class-admin-page.php';
 require_once CHC_DIR . 'admin/class-admin-bar.php';
@@ -28,7 +29,7 @@ function chc_settings(): array
 {
     // Se sirve index.html PLANO y el servidor (LiteSpeed) lo comprime al vuelo,
     // así que no hay toggles de compresión pre-generada (ver spec §4).
-    $d = ['enabled' => 1, 'ttl_hours' => 10, 'excluded_urls' => ''];
+    $d = ['enabled' => 1, 'ttl_hours' => 10, 'excluded_urls' => '', 'cf_enabled' => 0, 'cf_zone' => ''];
     $s = array_merge($d, (array) get_option('chc_settings', []));
     if (!isset($s['excluded_roles'])) {
         $s['excluded_roles'] = function_exists('wp_roles') ? array_keys(wp_roles()->get_names()) : ['administrator'];
