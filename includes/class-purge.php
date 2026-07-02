@@ -12,6 +12,7 @@ class CHC_Purge
         add_action('woocommerce_product_set_stock', [$this, 'on_wc_stock'], 10, 1);
         add_action('woocommerce_variation_set_stock', [$this, 'on_wc_stock'], 10, 1);
         add_action('chc_ttl_sweep', [$this, 'ttl_sweep']);
+        add_action('upgrader_process_complete', [$this, 'all'], 10, 0);
     }
 
     public function on_post($post_id): void
