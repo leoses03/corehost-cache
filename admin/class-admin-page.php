@@ -10,6 +10,7 @@ class CHC_Admin_Page
         add_action('admin_init', [$this, 'settings']);
         add_action('admin_enqueue_scripts', [$this, 'enqueue']);
         add_action('wp_ajax_chc_purge_all', [$this, 'ajax_purge']);
+        add_action('wp_ajax_chc_warm_step', [$this, 'ajax_warm']);
     }
 
     public function menu(): void
@@ -40,8 +41,9 @@ class CHC_Admin_Page
         if ($hook !== 'settings_page_chc-settings') { return; }
         wp_enqueue_script('chc-admin', plugins_url('admin.js', __FILE__), [], CHC_VERSION, true);
         wp_localize_script('chc-admin', 'chcAdmin', [
-            'ajaxUrl' => admin_url('admin-ajax.php'),
-            'nonce'   => wp_create_nonce('chc_purge'),
+            'ajaxUrl'   => admin_url('admin-ajax.php'),
+            'nonce'     => wp_create_nonce('chc_purge'),
+            'warmNonce' => wp_create_nonce('chc_warm'),
         ]);
     }
 
@@ -52,6 +54,54 @@ class CHC_Admin_Page
         chc_store()->purge_all();
         update_option('chc_last_purge', time(), false);
         wp_send_json_success(['ok' => true]);
+    }
+
+    /** URLs a precargar: home + todas las entradas/páginas públicas publicadas (sin query string). */
+    public static function warm_urls(): array
+    {
+        $urls  = [home_url('/')];
+        $types = get_post_types(['public' => true]);
+        unset($types['attachment']);
+        $q = new WP_Query([
+            'post_type'      => array_values($types),
+            'post_status'    => 'publish',
+            'posts_per_page' => 2000,
+            'fields'         => 'ids',
+            'no_found_rows'  => true,
+            'orderby'        => 'ID',
+            'order'          => 'ASC',
+        ]);
+        foreach ($q->posts as $id) {
+            $link = get_permalink($id);
+            if (is_string($link) && $link !== '') { $urls[] = $link; }
+        }
+        return array_values(array_unique(array_filter($urls, static fn($u) => strpos($u, '?') === false)));
+    }
+
+    /** Precarga por lotes (AJAX): visita las URLs para que se generen en el cache. */
+    public function ajax_warm(): void
+    {
+        check_ajax_referer('chc_warm');
+        if (!current_user_can('manage_options')) { wp_send_json_error('forbidden', 403); }
+
+        $offset = isset($_POST['offset']) ? max(0, (int) $_POST['offset']) : 0;
+        if ($offset === 0) {
+            $urls = self::warm_urls();
+            set_transient('chc_warm_urls', $urls, 10 * MINUTE_IN_SECONDS);
+        } else {
+            $urls = (array) get_transient('chc_warm_urls');
+        }
+        $total = count($urls);
+        foreach (array_slice($urls, $offset, 5) as $url) {
+            wp_remote_get($url, [
+                'timeout'    => 15,
+                'sslverify'  => false,
+                'user-agent' => 'CoreHostCache-Warmer',
+            ]);
+        }
+        $processed = min($offset + 5, $total);
+        if ($processed >= $total) { delete_transient('chc_warm_urls'); }
+        wp_send_json_success(['total' => $total, 'processed' => $processed, 'done' => $processed >= $total]);
     }
 
     public function render(): void
@@ -98,6 +148,15 @@ class CHC_Admin_Page
             <p><?php echo (int) $stats['pages']; ?> páginas cacheadas · <?php echo esc_html(size_format($stats['bytes'], 1)); ?> en disco.
             <?php if ($lp = (int) get_option('chc_last_purge', 0)) : ?> Última purga: <?php echo esc_html(date_i18n('Y-m-d H:i', $lp)); ?>.<?php endif; ?></p>
             <p><button type="button" class="button button-primary" id="chc-purge">Purgar todo</button> <span id="chc-purge-msg"></span></p>
+
+            <hr>
+            <h2>Precargar cache</h2>
+            <p class="description">Visita la home y todas las entradas/páginas publicadas para dejarlas guardadas en el cache.</p>
+            <p><button type="button" class="button" id="chc-warm">Precargar ahora</button> <span id="chc-warm-msg"></span></p>
+            <div id="chc-warm-progress" style="display:none;max-width:360px">
+                <progress id="chc-warm-bar" max="100" value="0" style="width:100%"></progress>
+                <span id="chc-warm-count"></span>
+            </div>
         </div>
         <?php
     }
