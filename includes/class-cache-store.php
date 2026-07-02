@@ -8,6 +8,18 @@ class CHC_Cache_Store
 
     public function base(): string { return $this->base_dir; }
 
+    /** Archivos que impiden el listado del dir de cache. Idempotente, sin deps de WP. */
+    public function protect(): void
+    {
+        if (!is_dir($this->base_dir) && !mkdir($this->base_dir, 0755, true) && !is_dir($this->base_dir)) { return; }
+        if (!is_file($this->base_dir . '/index.php')) {
+            @file_put_contents($this->base_dir . '/index.php', "<?php // Silence is golden.");
+        }
+        if (!is_file($this->base_dir . '/.htaccess')) {
+            @file_put_contents($this->base_dir . '/.htaccess', "Options -Indexes\n");
+        }
+    }
+
     /** Directorio de cache para host+URI (sin el archivo). */
     public function dir_for(string $host, string $uri): string
     {
@@ -24,6 +36,7 @@ class CHC_Cache_Store
     /** Escribe index.html + variantes .gz/.br. Devuelve formatos escritos. */
     public function write(string $host, string $uri, string $html, bool $gzip = false, bool $brotli = false): array
     {
+        $this->protect();
         $dir = $this->dir_for($host, $uri);
         if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) { return []; }
         $out = [];
@@ -54,8 +67,8 @@ class CHC_Cache_Store
         }
     }
 
-    /** Vacía todo el cache. */
-    public function purge_all(): void { $this->rrmdir($this->base_dir); }
+    /** Vacía todo el cache y re-crea las guardas anti-listado del dir base. */
+    public function purge_all(): void { $this->rrmdir($this->base_dir); $this->protect(); }
 
     /** Borra páginas (index.html + variantes) con mtime más viejo que $ttl seg. Nº de páginas. */
     public function sweep(int $ttl): int

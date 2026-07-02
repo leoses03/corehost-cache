@@ -15,6 +15,7 @@ t_assert(str_contains($block, 'RewriteCond %{REQUEST_URI} /$'), 'solo sirve URLs
 t_assert(str_contains($block, 'X-CoreHost-Cache "HIT" env=CHC_HIT'), 'header HIT env=CHC_HIT');
 t_assert(str_contains($block, 'X-CoreHost-Cache "HIT" env=REDIRECT_CHC_HIT'), 'header HIT env=REDIRECT_CHC_HIT');
 t_assert(str_contains($block, 'RewriteCond %{HTTP_HOST} ^[a-zA-Z0-9'), 'guard de host charset');
+t_assert(str_contains($block, 'RewriteCond %{REQUEST_URI} !\\.\\.'), 'rechaza .. en la URI');
 
 // install: nuestro bloque va ANTES de # BEGIN WordPress; remove lo quita idempotente
 $tmp = sys_get_temp_dir() . '/chc-ht-' . getmypid() . '.htaccess';

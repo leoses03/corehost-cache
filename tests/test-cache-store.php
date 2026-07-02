@@ -55,6 +55,8 @@ t_eq($st['pages'], 2, 'stats cuenta 2 páginas');
 t_assert($st['bytes'] > 0, 'stats bytes > 0');
 $s2->purge_all();
 
-// purge_all
+// purge_all: borra las páginas pero re-crea las guardas anti-listado (M1)
 $s->purge_all();
-t_assert(!is_dir($base) || count(glob("$base/*")) === 0, 'purge_all vacía');
+t_assert(count(glob("$base/*", GLOB_ONLYDIR) ?: []) === 0, 'purge_all borra todos los hosts');
+t_assert(is_file("$base/index.php"), 'purge_all recrea index.php (guarda anti-listado)');
+t_assert(is_file("$base/.htaccess"), 'purge_all recrea .htaccess (Options -Indexes)');

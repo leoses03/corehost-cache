@@ -34,6 +34,7 @@ class CHC_Htaccess
             . "RewriteCond %{REQUEST_URI} /$\n"
             . "RewriteCond %{HTTP_COOKIE} !($skip_cookies) [NC]\n"
             . "RewriteCond %{REQUEST_URI} !$skip_uris [NC]\n"
+            . "RewriteCond %{REQUEST_URI} !\\.\\. [NC]\n"
             . "RewriteCond %{DOCUMENT_ROOT}{$file} -f\n"
             . "RewriteRule .* {$file} [E=CHC_HIT:1,L,T=text/html]\n"
             . "</IfModule>\n"
