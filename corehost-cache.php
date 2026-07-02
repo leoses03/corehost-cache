@@ -37,15 +37,16 @@ function chc_store(): CHC_Cache_Store
     return new CHC_Cache_Store(WP_CONTENT_DIR . '/cache/corehost-cache');
 }
 
-/** Ruta URL (desde docroot) al dir de cache; maneja instalación en subdirectorio. */
+/**
+ * Ruta URL (desde docroot) al dir de cache; maneja instalación en subdirectorio.
+ * Se deriva de content_url() para ser correcta también bajo WP-CLI (donde
+ * $_SERVER['DOCUMENT_ROOT'] suele estar vacío, p.ej. al activar por `wp plugin activate`).
+ * Ej. root: /wp-content/cache/corehost-cache · subdir /key: /key/wp-content/cache/corehost-cache
+ */
 function chc_cache_url_path(): string
 {
-    $docroot = rtrim(str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT'] ?? ''), '/');
-    $cachefs = rtrim(str_replace('\\', '/', WP_CONTENT_DIR . '/cache/corehost-cache'), '/');
-    if ($docroot !== '' && str_starts_with($cachefs, $docroot)) {
-        return substr($cachefs, strlen($docroot)); // ej. /key/wp-content/cache/corehost-cache
-    }
-    return '/wp-content/cache/corehost-cache';
+    $path = (string) parse_url(content_url('/cache/corehost-cache'), PHP_URL_PATH);
+    return $path !== '' ? '/' . ltrim($path, '/') : '/wp-content/cache/corehost-cache';
 }
 
 function chc_root_htaccess(): string { return ABSPATH . '.htaccess'; }

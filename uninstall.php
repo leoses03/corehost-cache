@@ -9,3 +9,4 @@ CHC_Htaccess::remove(ABSPATH . '.htaccess');
 
 delete_option('chc_settings');
 delete_option('chc_htaccess_writable');
+delete_option('chc_last_purge');
