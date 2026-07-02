@@ -7,11 +7,13 @@ t_assert(str_contains($block, 'RewriteCond %{REQUEST_METHOD} GET'), 'solo GET');
 t_assert(str_contains($block, 'RewriteCond %{QUERY_STRING} ^$'), 'query vacío');
 t_assert(str_contains($block, 'chc_nocache'), 'bypass por cookie de rol');
 t_assert(str_contains($block, 'woocommerce_items_in_cart'), 'bypass carrito woo');
-t_assert(str_contains($block, '/index.html.br'), 'sirve brotli');
-t_assert(str_contains($block, '/index.html.gz'), 'sirve gzip');
-t_assert(str_contains($block, '%{DOCUMENT_ROOT}/key/wp-content/cache/corehost-cache/%{HTTP_HOST}%{REQUEST_URI}/index.html'), 'ruta de existencia con prefijo subdir');
-t_assert(str_contains($block, 'X-CoreHost-Cache'), 'header de HIT');
-t_assert(str_contains($block, 'Content-Encoding'), 'header content-encoding');
+t_assert(str_contains($block, 'RewriteRule .* /key/wp-content/cache/corehost-cache/%{HTTP_HOST}%{REQUEST_URI}index.html [E=CHC_HIT:1,L,T=text/html]'), 'sirve index.html plano');
+t_assert(str_contains($block, '%{DOCUMENT_ROOT}/key/wp-content/cache/corehost-cache/%{HTTP_HOST}%{REQUEST_URI}index.html -f'), 'test -f con prefijo subdir, sin doble barra');
+t_assert(!str_contains($block, '%{REQUEST_URI}/index.html'), 'no debe haber barra entre REQUEST_URI e index.html (evita doble barra)');
+t_assert(!str_contains($block, 'index.html.gz') && !str_contains($block, 'index.html.br'), 'no sirve variantes comprimidas por rewrite (LiteSpeed comprime al vuelo)');
+t_assert(str_contains($block, 'RewriteCond %{REQUEST_URI} /$'), 'solo sirve URLs con barra final');
+t_assert(str_contains($block, 'X-CoreHost-Cache "HIT" env=CHC_HIT'), 'header HIT env=CHC_HIT');
+t_assert(str_contains($block, 'X-CoreHost-Cache "HIT" env=REDIRECT_CHC_HIT'), 'header HIT env=REDIRECT_CHC_HIT');
 t_assert(str_contains($block, 'RewriteCond %{HTTP_HOST} ^[a-zA-Z0-9'), 'guard de host charset');
 
 // install: nuestro bloque va ANTES de # BEGIN WordPress; remove lo quita idempotente
