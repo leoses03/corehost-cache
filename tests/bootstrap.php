@@ -7,6 +7,7 @@ foreach ([
     '/includes/class-htaccess.php',
     '/includes/class-request-rules.php',
     '/includes/class-role-gate.php',
+    '/includes/class-cloudflare.php',
 ] as $f) {
     if (is_file($root . $f)) { require $root . $f; }
 }
