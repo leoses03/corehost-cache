@@ -1,10 +1,15 @@
 <?php
-$block = CHC_Htaccess::rules('/key/wp-content/cache/corehost-cache');
+$tp    = ['gclid', 'fbclid'];
+$block = CHC_Htaccess::rules('/key/wp-content/cache/corehost-cache', $tp);
 
 t_assert(str_contains($block, '# BEGIN CoreHost Cache'), 'marcador BEGIN');
 t_assert(str_contains($block, '# END CoreHost Cache'), 'marcador END');
 t_assert(str_contains($block, 'RewriteCond %{REQUEST_METHOD} GET'), 'solo GET');
-t_assert(str_contains($block, 'RewriteCond %{QUERY_STRING} ^$'), 'query vacío');
+t_assert(str_contains($block, 'RewriteCond %{QUERY_STRING} ^$|'), 'query vacía sigue aceptada (inicio de la alternancia)');
+t_assert(str_contains($block, 'utm_[^=&]*'), 'acepta utm_ en query');
+t_assert(str_contains($block, 'gclid'), 'acepta gclid en query');
+t_assert(str_contains($block, 'fbclid'), 'acepta fbclid en query');
+t_assert(!str_contains($block, 'RewriteCond %{QUERY_STRING} ^$\n') || str_contains($block, 'utm_'), 'la cond de query ya no es solo-vacía');
 t_assert(str_contains($block, 'chc_nocache'), 'bypass por cookie de rol');
 t_assert(str_contains($block, 'woocommerce_items_in_cart'), 'bypass carrito woo');
 t_assert(str_contains($block, 'RewriteRule .* /key/wp-content/cache/corehost-cache/%{HTTP_HOST}%{REQUEST_URI}index.html [E=CHC_HIT:1,L,T=text/html]'), 'sirve index.html plano');

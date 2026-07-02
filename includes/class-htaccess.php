@@ -8,11 +8,14 @@ class CHC_Htaccess
     public const END   = '# END CoreHost Cache';
 
     /**
-     * @param string $cache_url_path Ruta URL desde docroot al dir de cache, sin barra final.
+     * @param string $cache_url_path   Ruta URL desde docroot al dir de cache, sin barra final.
      *   Root install: '/wp-content/cache/corehost-cache'
      *   Subdir /key:  '/key/wp-content/cache/corehost-cache'
+     * @param array  $tracking_params  Params exactos de tracking (ver chc_tracking_params()); el
+     *   prefijo utm_ siempre se acepta. La query se sirve del cache si está vacía o compuesta
+     *   SOLO por estos params (no cambian el HTML de servidor).
      */
-    public static function rules(string $cache_url_path): string
+    public static function rules(string $cache_url_path, array $tracking_params = []): string
     {
         $c    = '/' . trim($cache_url_path, '/');
         // Se sirve el index.html PLANO y el servidor (LiteSpeed) lo comprime al vuelo.
@@ -25,12 +28,18 @@ class CHC_Htaccess
         $skip_cookies = 'chc_nocache|comment_author_|wp-postpass_|woocommerce_items_in_cart|woocommerce_cart_hash|wp_woocommerce_session_';
         $skip_uris    = '(^|/)(wp-admin|wp-login|wp-cron|wp-json|xmlrpc)([/.]|$)';
 
+        // Acepta query vacía o compuesta SOLO por params de tracking (utm_* + la lista dada);
+        // la misma lista alimenta is_cacheable() (CHC_Request_Rules::query_only_tracking()).
+        $keys = array_merge(['utm_[^=&]*'], array_map('preg_quote', $tracking_params));
+        $k    = implode('|', $keys);
+        $q_re = '^$|^(?:' . $k . ')=[^&]*(?:&(?:' . $k . ')=[^&]*)*$';
+
         return self::BEGIN . "\n"
             . "<IfModule mod_rewrite.c>\n"
             . "RewriteEngine On\n"
             . "RewriteCond %{HTTP_HOST} ^[a-zA-Z0-9.\\-]+$\n"
             . "RewriteCond %{REQUEST_METHOD} GET\n"
-            . "RewriteCond %{QUERY_STRING} ^$\n"
+            . "RewriteCond %{QUERY_STRING} {$q_re} [NC]\n"
             . "RewriteCond %{REQUEST_URI} /$\n"
             . "RewriteCond %{HTTP_COOKIE} !($skip_cookies) [NC]\n"
             . "RewriteCond %{REQUEST_URI} !$skip_uris [NC]\n"

@@ -65,7 +65,7 @@ function chc_root_htaccess(): string { return ABSPATH . '.htaccess'; }
 
 function chc_refresh_htaccess(): void
 {
-    $ok = CHC_Htaccess::install(chc_root_htaccess(), CHC_Htaccess::rules(chc_cache_url_path()));
+    $ok = CHC_Htaccess::install(chc_root_htaccess(), CHC_Htaccess::rules(chc_cache_url_path(), chc_tracking_params()));
     update_option('chc_htaccess_writable', $ok ? 1 : 0, false);
 }
 
