@@ -7,9 +7,11 @@ Generados por la skill `improve` el 2026-07-02 (commit base `54391ec`). Ejecutar
 | Plan | Título | Prioridad | Esfuerzo | Depende de | Estado |
 |------|--------|-----------|----------|------------|--------|
 | 001 | Toggle "No cachear esta página" + purga tras actualizaciones | P1 | S | — | DONE |
-| 002 | Purga de Cloudflare al invalidar | P1 | M | 001 | TODO |
+| 002 | Purga de Cloudflare al invalidar | P1 | M | 001 | DONE (E2E real de CF pendiente, ver nota) |
 
 Estados: TODO | IN PROGRESS | DONE | BLOCKED (motivo) | REJECTED (motivo)
+
+**Nota 002:** implementación + tests puros + verificación de wiring (CF desactivado, purga local intacta, sin errores) hechos en Keypro. La purga real contra la API de Cloudflare queda **pendiente de verificar** en un sitio de la flota que sí esté tras Cloudflare (Keypro no lo está) — falta definir `cf_enabled`/`cf_zone`/token ahí y confirmar en el dashboard de CF.
 
 ## Notas de dependencia
 - 002 depende de 001 porque ambos extienden `includes/class-purge.php`; hacer 001 primero evita conflictos y 002 construye sobre el registro de hooks.
