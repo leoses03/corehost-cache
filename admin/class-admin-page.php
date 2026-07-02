@@ -34,6 +34,13 @@ class CHC_Admin_Page
         $new_token = sanitize_text_field((string) ($input['cf_token'] ?? ''));
         $cf_token  = $new_token !== '' ? $new_token : (string) ($old['cf_token'] ?? '');
 
+        // Drop-in nginx: al cambiar de estado, instala/quita advanced-cache.php + WP_CACHE.
+        $old_dropin = (int) ($old['dropin_enabled'] ?? 0);
+        $new_dropin = empty($input['dropin_enabled']) ? 0 : 1;
+        if ($new_dropin !== $old_dropin) {
+            if ($new_dropin) { (new CHC_Dropin())->install(); } else { (new CHC_Dropin())->remove(); }
+        }
+
         return [
             'enabled'        => empty($input['enabled']) ? 0 : 1,
             'ttl_hours'      => max(0, (int) ($input['ttl_hours'] ?? 10)),
@@ -43,6 +50,7 @@ class CHC_Admin_Page
             'cf_zone'        => sanitize_text_field((string) ($input['cf_zone'] ?? '')),
             'cf_token'       => $cf_token,
             'auto_warm'      => empty($input['auto_warm']) ? 0 : 1,
+            'dropin_enabled' => $new_dropin,
         ];
     }
 
@@ -172,6 +180,16 @@ class CHC_Admin_Page
                     <tr><th scope="row">Auto-precarga</th><td>
                         <label><input type="checkbox" name="chc_settings[auto_warm]" value="1" <?php checked($s['auto_warm']); ?>> Precargar el cache automáticamente tras una purga total</label>
                         <p class="description">Agenda una precarga en segundo plano (WP-Cron) unos segundos después de purgar todo.</p>
+                    </td></tr>
+                    <tr><th scope="row">Compatibilidad sin .htaccess (nginx)</th><td>
+                        <label><input type="checkbox" name="chc_settings[dropin_enabled]" value="1" <?php checked($s['dropin_enabled']); ?>> Instalar drop-in <code>advanced-cache.php</code></label>
+                        <p class="description">En Apache/LiteSpeed el <code>.htaccess</code> ya sirve el cache sin pasar por PHP; activa esto solo en hosts donde el <code>.htaccess</code> no aplica (p.ej. nginx). Inofensivo como respaldo en cualquier caso.</p>
+                        <?php if ((new CHC_Dropin())->foreign_exists()) : ?>
+                            <p class="description" style="color:#b32d2e">Hay un <code>advanced-cache.php</code> de otro origen en <code>wp-content/</code>; no se instalará el nuestro para no pisarlo.</p>
+                        <?php elseif (!empty($s['dropin_enabled']) && !(defined('WP_CACHE') && WP_CACHE)) : ?>
+                            <p class="description" style="color:#b32d2e">No se pudo activar <code>WP_CACHE</code> automáticamente (¿<code>wp-config.php</code> no escribible?). Pega esta línea justo después de <code>&lt;?php</code> en tu <code>wp-config.php</code>:</p>
+                            <textarea readonly rows="2" style="width:100%;font-family:monospace">define('WP_CACHE', true); // CoreHost Cache</textarea>
+                        <?php endif; ?>
                     </td></tr>
                 </table>
                 <?php submit_button(); ?>
