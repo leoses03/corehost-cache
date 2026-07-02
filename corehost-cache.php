@@ -24,7 +24,9 @@ require_once CHC_DIR . 'admin/class-admin-page.php';
 /** Ajustes con defaults; excluded_roles = TODOS los roles si no se guardó nada. */
 function chc_settings(): array
 {
-    $d = ['enabled' => 1, 'ttl_hours' => 10, 'cache_404' => 0, 'excluded_urls' => '', 'gzip' => 1, 'brotli' => 1];
+    // gzip/brotli pre-generados OFF por defecto: se sirve index.html PLANO y el servidor
+    // (LiteSpeed) lo comprime al vuelo, así que las variantes no se sirven (ver spec §4).
+    $d = ['enabled' => 1, 'ttl_hours' => 10, 'cache_404' => 0, 'excluded_urls' => '', 'gzip' => 0, 'brotli' => 0];
     $s = array_merge($d, (array) get_option('chc_settings', []));
     if (!isset($s['excluded_roles'])) {
         $s['excluded_roles'] = function_exists('wp_roles') ? array_keys(wp_roles()->get_names()) : ['administrator'];

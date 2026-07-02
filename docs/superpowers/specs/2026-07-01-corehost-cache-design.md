@@ -52,15 +52,20 @@ corehost-cache/
 - `%{QUERY_STRING}` vacío
 - `%{HTTP_COOKIE}` **no** contiene: `chc_nocache` (marca de sesión que NO debe cachearse — la pone el plugin a los logueados con un rol excluido; ver §5.1), `comment_author_`, `wp-postpass_`, `woocommerce_items_in_cart`, `woocommerce_cart_hash`, `wp_woocommerce_session_`
   *(Nota: `chc_nocache` reemplaza el bypass genérico por `wordpress_logged_in_`; así los roles permitidos SÍ pueden recibir cache y los excluidos no.)*
-- `%{REQUEST_URI}` **no** empieza por `wp-admin`, `wp-login`, `wp-json`, `wp-cron`, `xmlrpc`
+- `%{REQUEST_URI}` **no** contiene `wp-admin`/`wp-login`/`wp-json`/`wp-cron`/`xmlrpc` (anclado con `([/.]|$)`)
+- `%{REQUEST_URI}` termina en `/` (esquema directorio/index.html; evita doble barra)
+- `%{HTTP_HOST}` con forma de hostname (`^[a-zA-Z0-9.\-]+$`)
 - El archivo cacheado existe (`-f`)
 
-**Mapeo de ruta:** `wp-content/cache/corehost-cache/%{HTTP_HOST}%{REQUEST_URI}/index.html`
-El segmento `%{HTTP_HOST}` permite servir **cualquier dominio** que apunte a ese docroot.
+**Mapeo de ruta:** `wp-content/cache/corehost-cache/%{HTTP_HOST}%{REQUEST_URI}index.html`
+El segmento `%{HTTP_HOST}` permite servir **cualquier dominio** que apunte a ese docroot. El prefijo de subdirectorio (p.ej. `/key`) se deriva de `content_url()` (fiable en web y WP-CLI).
 
-**Selección de variante por `Accept-Encoding`** (en orden): `.html.br` → `.html.gz` → `.html`. Se sirve con `Content-Encoding` correcto (`br`/`gzip`/ninguno), `Content-Type: text/html` y `Vary: Accept-Encoding`. Marca de observabilidad: **`X-CoreHost-Cache: HIT`**.
+**Servicio y compresión — REALIDAD LiteSpeed (desviación del diseño, verificada e2e 2026-07-01):**
+El diseño original planteaba servir variantes pre-comprimidas `.br`/`.gz` por `Accept-Encoding`. En LiteSpeed eso **no funciona**: (a) las cabeceras de `mod_headers` con `env=REDIRECT_*` NO se aplican tras el rewrite interno, así que la variante comprimida se serviría **sin `Content-Encoding`** (bytes basura); (b) el test `-f` no normaliza `//`. **Solución adoptada:** se sirve **`index.html` PLANO** y **LiteSpeed lo comprime al vuelo** (brotli/gzip dinámico) — mismo resultado para el cliente. Por eso la **pre-compresión (`gzip`/`brotli`) queda OFF por defecto** (generarla sería desperdicio: no se sirve). La capacidad sigue en `Cache_Store` por si en el futuro se añade servicio pre-comprimido para Apache sin compresión dinámica.
 
-**Home / trailing slash:** `/` → `.../index.html` en la raíz del host; se cachea la forma canónica con slash final (WP redirige a ella).
+Cabecera de observabilidad **`X-CoreHost-Cache: HIT`** + `Cache-Control: public, max-age=600` se setean con `Header ... env=CHC_HIT` **y** `env=REDIRECT_CHC_HIT` (LiteSpeed usa el primero; Apache el segundo). `Vary: Accept-Encoding` lo pone el propio servidor al comprimir.
+
+**Home / trailing slash:** solo se sirven URLs con barra final; `/key/` → `.../key/index.html`. WP redirige las URLs sin barra a la forma canónica con barra.
 
 ## 5. Generación — `Page_Generator` + `Request_Rules`
 
