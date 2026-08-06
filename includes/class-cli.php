@@ -17,6 +17,10 @@ class CHC_CLI
         $s = chc_store()->stats();
         WP_CLI::log('Páginas: ' . $s['pages'] . ' · Disco: ' . size_format($s['bytes'], 1));
         WP_CLI::log('.htaccess escribible: ' . (get_option('chc_htaccess_writable', 1) ? 'sí' : 'NO'));
+        $v = get_option('chc_last_veto');
+        if (is_array($v) && !empty($v['ts'])) {
+            WP_CLI::log('Último veto de guardado: ' . gmdate('Y-m-d H:i:s', (int) $v['ts']) . ' UTC · ' . ($v['uri'] ?? '?') . ' · ' . ($v['reason'] ?? '?'));
+        }
     }
 
     /** Precalienta el cache visitando las URLs del sitemap. */

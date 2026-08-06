@@ -24,6 +24,7 @@ class CHC_Page_Generator
             && self::host_allowed($_SERVER['HTTP_HOST'] ?? '')
             && !self::has_nocache_headers()
             && CHC_Request_Rules::is_cacheable()
+            && self::html_complete($html)
         ) {
             $marked = $html . "\n<!-- corehost-cache " . gmdate('Y-m-d H:i:s') . " UTC -->";
             chc_store()->write(
@@ -33,6 +34,42 @@ class CHC_Page_Generator
             );
         }
         return $html;
+    }
+
+    /**
+     * No almacenar capturas de HTML que se saben rotas (CSS de Elementor aún no
+     * reescrito en disco, o página con datos de Elementor renderizada sin él).
+     * El visitante recibe su HTML igual; solo se omite el guardado.
+     */
+    private static function html_complete(string $html): bool
+    {
+        $reason = null;
+        $uploads = wp_get_upload_dir();
+        if (empty($uploads['error'])) {
+            $reason = CHC_Html_Integrity::assets_veto($html, (string) $uploads['baseurl'], (string) $uploads['basedir']);
+        }
+        if ($reason === null && function_exists('is_singular') && is_singular()) {
+            $id = (int) get_queried_object_id();
+            if ($id > 0) {
+                $reason = CHC_Html_Integrity::elementor_veto(
+                    $html,
+                    $id,
+                    strlen((string) get_post_meta($id, '_elementor_data', true)),
+                    metadata_exists('post', $id, '_elementor_edit_mode'),
+                    (string) get_post_meta($id, '_elementor_edit_mode', true)
+                );
+            }
+        }
+        if ($reason === null && !apply_filters('chc_html_complete', true, $html)) {
+            $reason = 'filtro';
+        }
+        if ($reason !== null) {
+            $uri = (string) ($_SERVER['REQUEST_URI'] ?? '/');
+            update_option('chc_last_veto', ['ts' => time(), 'uri' => $uri, 'reason' => $reason], false);
+            do_action('chc_store_vetoed', $reason, $uri);
+            return false;
+        }
+        return true;
     }
 
     /** Solo cachear el host canónico del sitio (o su variante www). Evita cache poisoning por Host. */

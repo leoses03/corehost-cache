@@ -4,6 +4,7 @@ if (!defined('ABSPATH')) { define('ABSPATH', sys_get_temp_dir() . '/chc-abspath/
 $root = dirname(__DIR__);
 foreach ([
     '/includes/class-cache-store.php',
+    '/includes/class-html-integrity.php',
     '/includes/class-htaccess.php',
     '/includes/class-request-rules.php',
     '/includes/class-role-gate.php',

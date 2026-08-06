@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CoreHost Cache
  * Description: Page cache estático servido por .htaccess sin PHP (LiteSpeed lo comprime al vuelo), con exclusión por rol e invalidación por evento+TTL. Seguro para WooCommerce.
- * Version: 1.6.0
+ * Version: 1.7.0
  * Author: CoreHost
  * Requires PHP: 8.1
  * License: GPL-2.0-or-later
@@ -10,10 +10,11 @@
 
 if (!defined('ABSPATH')) { exit; }
 
-define('CHC_VERSION', '1.6.0');
+define('CHC_VERSION', '1.7.0');
 define('CHC_DIR', plugin_dir_path(__FILE__));
 
 require_once CHC_DIR . 'includes/class-cache-store.php';
+require_once CHC_DIR . 'includes/class-html-integrity.php';
 require_once CHC_DIR . 'includes/class-htaccess.php';
 require_once CHC_DIR . 'includes/class-request-rules.php';
 require_once CHC_DIR . 'includes/class-role-gate.php';
